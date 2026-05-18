@@ -35,3 +35,7 @@ python main.py
 Output files are saved next to the originals with `_stretched_16x9` added to the name.
 
 I don't take this code seriously and wether should you, so yeah, do whatever the fuck you want with it idc lol. it can be easily replicated in codex or claude in like half an hour anyway
+
+## License
+
+WTFPL Version 2. Do what the fuck you want to.
