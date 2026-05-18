@@ -1,3 +1,9 @@
+"""StretchMyClip: tiny GUI batch tool for stretching videos to 16:9.
+
+The app intentionally changes the video frame shape while leaving timing and
+audio alone. FFmpeg does the actual video work; tkinter handles the UI.
+"""
+
 import json
 import math
 import shutil
@@ -42,6 +48,8 @@ def is_ffmpeg_available() -> bool:
 
 @lru_cache(maxsize=1)
 def detect_best_video_encoder() -> tuple[str, str]:
+    # Ask the installed FFmpeg build which H.264 encoders it supports.
+    # GPU encoders are preferred when available, with CPU as the fallback.
     if shutil.which("ffmpeg") is None:
         return "libx264", "CPU"
 
@@ -64,6 +72,7 @@ def detect_best_video_encoder() -> tuple[str, str]:
 
 
 def probe_video_size(video_path: Path) -> tuple[int, int]:
+    # ffprobe gives us the source dimensions without decoding the whole file.
     command = [
         "ffprobe",
         "-v",
@@ -83,6 +92,8 @@ def probe_video_size(video_path: Path) -> tuple[int, int]:
 
 
 def build_video_encoder_args(video_encoder: str) -> list[str]:
+    # CPU uses quality-based CRF; GPU encoders use a higher VBR target because
+    # hardware encoders usually need more bitrate for similar visual quality.
     if video_encoder == "libx264":
         return ["-c:v", "libx264", "-preset", "medium", "-crf", "18"]
 
@@ -133,6 +144,8 @@ def build_video_encoder_args(video_encoder: str) -> list[str]:
 
 def compute_target_size(width: int, height: int) -> tuple[int, int]:
     # Keep the original height and stretch/squash only the width to 16:9.
+    # The width is rounded up to an even number because many H.264 encoders
+    # reject odd frame dimensions.
     target_width = math.ceil((height * 16 / 9) / 2) * 2
     return target_width, height
 
@@ -157,6 +170,8 @@ def stretch_video(
     target_width, target_height = compute_target_size(width, height)
     output_path = build_output_path(video_path)
 
+    # setdar/setsar prevent players from using old aspect metadata and showing
+    # a 16:9 container with a visually unstretched image inside it.
     command = [
         "ffmpeg",
         "-y",
@@ -191,6 +206,8 @@ class StretchMyClipApp:
 
         self._build_ui()
 
+        # Drag-and-drop is optional. The app still works as a click-to-select
+        # file picker if tkinterdnd2 is not installed.
         if DND_FILES:
             self.drop_zone.drop_target_register(DND_FILES)
             self.drop_zone.dnd_bind("<<Drop>>", self.on_drop)
@@ -287,6 +304,7 @@ class StretchMyClipApp:
         self.process_videos([Path(raw_path) for raw_path in raw_paths])
 
     def process_videos(self, video_paths: list[Path]) -> None:
+        # All selected files use the same current UI options for this batch.
         if not is_ffmpeg_available():
             messagebox.showerror(
                 APP_TITLE,
@@ -345,6 +363,8 @@ class StretchMyClipApp:
             elif output_path:
                 if self.replace_original_var.get():
                     try:
+                        # Keep the original recoverable in the Recycle Bin,
+                        # then put the converted file back at the original path.
                         original_path = video_path
                         temp_output_path = output_path.with_name(f"{video_path.stem}_replacement{video_path.suffix}")
 
