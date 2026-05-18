@@ -1,6 +1,6 @@
 # StretchMyClip
 
-It does what the name says it streches your clips.
+It does what the name says, it streches your clips lol. (first time pushing github repo, kinda nervous >w<)
 
 You just hit a clip and want to share it with your friends but you try-hard ass plays on 4:3 or other shenanigans? Fear not! I have a solution.
 StretchMyClip is a small app vibe-coded in Python (yes, I have hella limited knowledge about coding). The program itself uses ffmpeg and basically it changes aspect ratio of the video to match standard 16:9. Also there is side benefit - it reduces clips size by a lot so you can also just compress the videos with it if you want idk.
